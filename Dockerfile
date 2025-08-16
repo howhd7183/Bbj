@@ -1,16 +1,19 @@
 FROM golang:1.21
 
-ENV TZ=Asia/Shanghai
+ENV TZ=Asia/Shanghai \
+    PORT=3000
 
-# Install SSH for container access
-RUN apt-get update && apt-get install -y openssh-server sudo && \
+# Install SSH for container access + Python for dummy web
+RUN apt-get update && \
+    apt-get install -y openssh-server sudo python3 && \
     mkdir -p /var/run/sshd && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install WebTTY
 RUN go install github.com/maxmcd/webtty@latest
 
-# Expose webtty port (any port, used by WebRTC signaling)
-EXPOSE 3000
+# Expose ports
+EXPOSE 3000 8080
 
-CMD ["webtty", "-cmd", "bash"]
+# Start WebTTY and dummy Python web server
+CMD bash -c "webtty -cmd bash & python3 -m http.server 8080"
